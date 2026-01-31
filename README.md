@@ -34,13 +34,29 @@ allotment/
 └── .github/          # CI workflows
 ```
 
-## Prerequisites
+## Deployment
+
+🚀 **Production Ready**: Deploy backend to Railway and frontend to Vercel.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide including:
+- Railway backend setup with PostgreSQL
+- Vercel frontend configuration
+- Environment variables
+- CORS configuration
+- Database migrations
+- Continuous deployment
+
+**Quick Deploy**:
+- **Backend**: [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/blank)
+- **Frontend**: [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Mixers28/Allotment_helper)
+
+## Local Development Prerequisites
 
 - **Node.js** 20+ (LTS recommended)
 - **pnpm** 8+
 - **PostgreSQL** 15+
 
-## Setup Instructions
+## Local Setup Instructions
 
 ### 1. Install dependencies
 

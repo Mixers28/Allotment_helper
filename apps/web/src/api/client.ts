@@ -5,7 +5,9 @@ import type {
   UpdateBedInput,
 } from '@allotment/domain';
 
-const API_BASE = '/api';
+// Use environment variable in production, fallback to /api for local dev with proxy
+const API_BASE =
+  import.meta.env.VITE_API_URL || (import.meta.env.PROD ? '' : '/api');
 
 interface PlotResponse {
   id: string;

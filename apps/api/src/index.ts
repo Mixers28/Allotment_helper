@@ -5,7 +5,25 @@ import { bedRoutes } from './routes/beds.js';
 
 const server = Fastify({ logger: true });
 
-await server.register(cors, { origin: true });
+// CORS configuration for production deployment
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:5173'];
+
+await server.register(cors, {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+
+    // Check if origin is allowed
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'), false);
+    }
+  },
+  credentials: true,
+});
 
 server.get('/health', async () => ({ status: 'ok' }));
 

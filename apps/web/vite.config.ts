@@ -13,4 +13,14 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+  },
+  define: {
+    // Expose env variables to the client
+    'import.meta.env.VITE_API_URL': JSON.stringify(
+      process.env.VITE_API_URL || '/api'
+    ),
+  },
 });
