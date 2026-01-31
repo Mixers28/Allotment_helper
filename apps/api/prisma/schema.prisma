@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model PlotBase {
+  id           String   @id @default(uuid())
+  name         String
+  units        String   @default("meters")
+  boundaryType String   @default("rect")
+  boundaryJson Json     // { width, height }
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  beds         BedBase[]
+}
+
+model BedBase {
+  id          String   @id @default(uuid())
+  plotId      String
+  plot        PlotBase @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  name        String
+  x           Float
+  y           Float
+  width       Float
+  height      Float
+  rotationDeg Float    @default(0)
+  isLocked    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([plotId])
+}
+
+// Seed data models (for crop catalog)
+model Crop {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  family    String?
+  varieties Variety[]
+}
+
+model Variety {
+  id              String  @id @default(uuid())
+  cropId          String
+  crop            Crop    @relation(fields: [cropId], references: [id], onDelete: Cascade)
+  name            String
+  rowSpacingCm    Float?
+  plantSpacingCm  Float?
+  matureSpreadCm  Float?
+  growthHabit     String? // upright | bush | vine
+
+  @@index([cropId])
+}
