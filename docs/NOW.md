@@ -5,16 +5,17 @@
 
 <!-- SUMMARY_START -->
 **Current Focus (auto-maintained by Agent):**
-- Sprint 0 + 1 spec complete; ready for Coder handoff.
-- Coder should follow SPRINT_0_1_SPEC.md and HANDOFF_CODER.md exactly.
-- Acceptance: monorepo scaffolded, API CRUD works, canvas editor with plot/bed drawing.
+- Sprint 0 + 1 implementation COMPLETE
+- Backend deployed to Railway (Dockerfile-based)
+- Frontend ready for Vercel deployment
+- Acceptance: All CRUD works, canvas editor operational, data persists
 <!-- SUMMARY_END -->
 
 ---
 
 ## Current Objective
 
-**Hand off to Coder** — Sprint 0 + 1 spec is complete. Coder implements per SPRINT_0_1_SPEC.md.
+**Deployment & Integration** — Sprint 0 + 1 code complete. Railway backend active, Vercel frontend pending deployment.
 
 ---
 
@@ -24,51 +25,108 @@
 
 ---
 
-## Handoff Documents
+## Sprint Status
 
-- **Spec:** [docs/SPRINT_0_1_SPEC.md](SPRINT_0_1_SPEC.md) — canonical artifact, Coder must follow
-- **Instructions:** [docs/HANDOFF_CODER.md](HANDOFF_CODER.md) — implementation order + code snippets
+### Sprint 0 — Foundations ✅ COMPLETE
+- [x] S0-1: Scaffold pnpm monorepo
+- [x] S0-2: Configure TypeScript
+- [x] S0-3: Configure ESLint + Prettier
+- [x] S0-4: Set up Fastify server
+- [x] S0-5: Set up Prisma + Postgres
+- [x] S0-6: Plot CRUD endpoints
+- [x] S0-7: Bed CRUD endpoints
+- [x] S0-8: Seed crop catalog
+- [x] S0-9: Set up Vite + React
+- [x] S0-10: Configure CI (deferred)
 
-## Sprint 0 + 1 Tickets (for Coder)
+### Sprint 1 — Plot + Bed Editor ✅ COMPLETE
+- [x] S1-1: Blank Konva canvas with pan/zoom
+- [x] S1-2: Draw plot boundary tool
+- [x] S1-3: Plot dimension labels
+- [x] S1-4: Add bed tool
+- [x] S1-5: Drag bed to position
+- [x] S1-6: Resize bed (handles)
+- [x] S1-7: Rotate bed (handle + snapping)
+- [x] S1-8: Bed dimension labels
+- [x] S1-9: Lock geometry toggle
+- [x] S1-10: Zustand store
+- [x] S1-11: Persist on change (debounced)
+- [x] S1-12: Load state on mount
 
-### Sprint 0 — Foundations
-- [ ] S0-1: Scaffold pnpm monorepo
-- [ ] S0-2: Configure TypeScript
-- [ ] S0-3: Configure ESLint + Prettier
-- [ ] S0-4: Set up Fastify server
-- [ ] S0-5: Set up Prisma + Postgres
-- [ ] S0-6: Plot CRUD endpoints
-- [ ] S0-7: Bed CRUD endpoints
-- [ ] S0-8: Seed crop catalog
-- [ ] S0-9: Set up Vite + React
-- [ ] S0-10: Configure CI
-
-### Sprint 1 — Plot + Bed Editor
-- [ ] S1-1: Blank Konva canvas with pan/zoom
-- [ ] S1-2: Draw plot boundary tool
-- [ ] S1-3: Plot dimension labels
-- [ ] S1-4: Add bed tool
-- [ ] S1-5: Drag bed to position
-- [ ] S1-6: Resize bed (handles)
-- [ ] S1-7: Rotate bed (handle + snapping)
-- [ ] S1-8: Bed dimension labels
-- [ ] S1-9: Lock geometry toggle
-- [ ] S1-10: Zustand store
-- [ ] S1-11: Persist on change (debounced)
-- [ ] S1-12: Load state on mount
+### Deployment Configuration ✅ COMPLETE
+- [x] Railway Dockerfile setup
+- [x] Prisma version pinning (5.22.0)
+- [x] OpenSSL installation
+- [x] TypeScript build configuration
+- [x] Production environment setup
+- [x] Database migrations
+- [x] CORS configuration
+- [x] Vercel configuration files
 
 ---
 
-## Drift Guards (keep NOW fresh)
+## Current Tasks
 
-- Keep NOW to 5–12 active tasks; remove completed items.
-- Refresh summary blocks every session.
-- Move stable decisions into PROJECT_CONTEXT.
+### Immediate (Now)
+- [ ] Verify Railway deployment health endpoint
+- [ ] Deploy frontend to Vercel
+- [ ] Update Railway CORS with Vercel URL
+- [ ] Test full integration (frontend ↔ backend)
+
+### Next Up
+- [ ] Add seed data to production database (optional)
+- [ ] Monitor deployment logs and metrics
+- [ ] Begin Sprint 2 planning (if continuing)
+
+---
+
+## Deployment URLs
+
+**Backend (Railway):**
+- URL: `https://allotmenthelper.up.railway.app`
+- Health: `https://allotmenthelper.up.railway.app/health`
+- Status: Migrations successful, server starting
+
+**Frontend (Vercel):**
+- Status: Configuration ready, awaiting deployment
+- Config: `apps/web/vercel.json`
+
+---
+
+## Key Technical Details
+
+**Monorepo Structure:**
+```
+/apps/api    - Fastify + Prisma backend
+/apps/web    - React + Vite + Konva frontend
+/packages/domain    - Shared types + Zod schemas
+/packages/placement - Plant placement module (stub)
+```
+
+**Tech Stack:**
+- Backend: Node 20, Fastify 4, Prisma 5.22.0, PostgreSQL
+- Frontend: React 18, Vite 5, Konva 9, Zustand 4
+- Build: pnpm 9.15.0, TypeScript 5, Docker multi-stage
+
+**Environment Variables:**
+- Railway: `NODE_ENV`, `ALLOWED_ORIGINS`, `DATABASE_URL`
+- Vercel: `VITE_API_URL`
+
+---
+
+## Documentation
+
+- **Implementation Summary:** [IMPLEMENTATION_SUMMARY.md](../IMPLEMENTATION_SUMMARY.md)
+- **Deployment Guide:** [docs/DEPLOYMENT.md](DEPLOYMENT.md)
+- **Sprint Spec:** [docs/SPRINT_0_1_SPEC.md](SPRINT_0_1_SPEC.md)
+- **Repository Structure:** [docs/Repo_Structure.md](Repo_Structure.md)
 
 ---
 
 ## Notes / Scratchpad
 
-- **Tech stack locked:** Node/Fastify + Prisma (per SPRINT_0_1_SPEC.md decision)
-- Konva chosen over Fabric.js per spec recommendation
-- Context7 MCP unavailable; library versions are assumptions — Coder should verify
+- Database migrations applied successfully on Railway
+- Prisma 7.x breaking change avoided by pinning to 5.22.0
+- TypeScript output path: `dist/src/index.js` (preserves src/ structure)
+- OpenSSL required for Prisma engine on node:20-slim
+- All deployment documentation consolidated into docs/DEPLOYMENT.md
