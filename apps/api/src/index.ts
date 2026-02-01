@@ -7,19 +7,27 @@ const server = Fastify({ logger: true });
 
 // CORS configuration for production deployment
 const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
   : ['http://localhost:5173'];
+
+console.log('CORS allowed origins:', allowedOrigins);
 
 await server.register(cors, {
   origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
+    console.log('CORS check - Origin:', origin);
 
-    // Check if origin is allowed
-    if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    // Check if origin is allowed or if wildcard is set
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'), false);
+      console.log('CORS rejected - Origin not in allowed list');
+      // Return false but don't throw error (avoids 500)
+      callback(null, false);
     }
   },
   credentials: true,
