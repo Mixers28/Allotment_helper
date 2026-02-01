@@ -1,2 +1,2 @@
-export * from './plot';
-export * from './bed';
+export * from './plot.js';
+export * from './bed.js';
