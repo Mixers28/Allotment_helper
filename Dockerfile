@@ -1,6 +1,9 @@
 # Multi-stage build for Allotment API
 FROM node:20-slim AS base
 
+# Install OpenSSL (required by Prisma)
+RUN apt-get update -y && apt-get install -y openssl
+
 # Enable corepack (will use packageManager field from package.json)
 RUN corepack enable
 
