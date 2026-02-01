@@ -1,5 +1,4 @@
 # Railway/Nixpacks configuration for monorepo deployment
-# Place this at the root of the monorepo
 
 [phases.setup]
 nixPkgs = ["nodejs-20_x"]
