@@ -12,25 +12,16 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 console.log('CORS allowed origins:', allowedOrigins);
 
+// Determine CORS origin setting
+const corsOrigin = allowedOrigins.includes('*')
+  ? true  // Allow all origins
+  : allowedOrigins;
+
 await server.register(cors, {
-  origin: (origin, callback) => {
-    console.log('CORS check - Origin:', origin);
-
-    // Allow requests with no origin (mobile apps, Postman, curl, etc.)
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    // Check if origin is allowed or if wildcard is set
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log('CORS rejected - Origin not in allowed list');
-      // Return false but don't throw error (avoids 500)
-      callback(null, false);
-    }
-  },
-  credentials: true,
+  origin: corsOrigin,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: !allowedOrigins.includes('*'), // Can't use credentials with wildcard
 });
 
 server.get('/health', async () => ({ status: 'ok' }));
