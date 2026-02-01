@@ -42,14 +42,12 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/
 COPY packages/domain/package.json ./packages/domain/
 
-# Install production dependencies only
-RUN pnpm install --frozen-lockfile --prod
-
 # Copy built files from build stage
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
-COPY --from=build /app/node_modules/.pnpm ./node_modules/.pnpm
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
+
+# Install production dependencies (includes Prisma)
+RUN pnpm install --frozen-lockfile --prod
 
 # Expose port
 EXPOSE 3001
