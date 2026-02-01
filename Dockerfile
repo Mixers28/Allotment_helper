@@ -28,11 +28,13 @@ FROM dependencies AS build
 # Copy source code
 COPY . .
 
-# Generate Prisma client
+# Build domain package first (dependency of API)
+WORKDIR /app/packages/domain
+RUN pnpm build
+
+# Generate Prisma client and build API
 WORKDIR /app/apps/api
 RUN pnpm db:generate
-
-# Build TypeScript
 RUN pnpm build
 
 # Stage 3: Production
@@ -48,6 +50,7 @@ COPY packages/domain/package.json ./packages/domain/
 # Copy built files from build stage
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/prisma ./apps/api/prisma
+COPY --from=build /app/packages/domain/dist ./packages/domain/dist
 
 # Install production dependencies (includes Prisma)
 RUN pnpm install --frozen-lockfile --prod
