@@ -1,8 +1,8 @@
 # Multi-stage build for Allotment API
 FROM node:20-slim AS base
 
-# Enable corepack and install pnpm (matches package.json packageManager)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Enable corepack (will use packageManager field from package.json)
+RUN corepack enable
 
 # Stage 1: Dependencies
 FROM base AS dependencies
