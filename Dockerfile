@@ -49,6 +49,11 @@ COPY --from=build /app/apps/api/prisma ./apps/api/prisma
 # Install production dependencies (includes Prisma)
 RUN pnpm install --frozen-lockfile --prod
 
+# Generate Prisma client with production dependencies
+WORKDIR /app/apps/api
+RUN pnpm prisma generate
+WORKDIR /app
+
 # Expose port
 EXPOSE 3001
 
@@ -57,4 +62,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3001/health', (r) => { process.exit(r.statusCode === 200 ? 0 : 1) })"
 
 # Start command (with migrations)
-CMD ["sh", "-c", "cd apps/api && npx prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "-c", "cd apps/api && pnpm prisma migrate deploy && node dist/index.js"]
