@@ -1,7 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm install && cd packages/domain && pnpm build && cd ../../apps/web && pnpm build",
-  "devCommand": "cd apps/web && pnpm dev",
+  "buildCommand": "pnpm --filter @allotment/domain build && pnpm --filter @allotment/web build",
   "installCommand": "pnpm install",
   "framework": null,
   "outputDirectory": "apps/web/dist"
