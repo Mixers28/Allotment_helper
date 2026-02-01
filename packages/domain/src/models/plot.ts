@@ -12,5 +12,5 @@ export interface PlotBase {
 }
 
 export interface PlotWithBeds extends PlotBase {
-  beds: import('./bed').BedBase[];
+  beds: import('./bed.js').BedBase[];
 }
