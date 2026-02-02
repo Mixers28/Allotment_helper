@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Rect, Text, Group, Circle, Line } from 'react-konva';
 import type Konva from 'konva';
 import type { BedBase } from '@allotment/domain';
@@ -36,7 +36,6 @@ const SECTION_COLORS = [
 ];
 
 export function BedShape({ bed }: BedShapeProps) {
-  const groupRef = useRef<Konva.Group>(null);
   const { selectedBedId, setSelectedBedId, updateBed, plot } = usePlotStore();
   const { currentSeasonId, bedSectionPlans, selectedSectionId, setSelectedSectionId } = useSeasonStore();
   const isSelected = selectedBedId === bed.id;
@@ -64,8 +63,9 @@ export function BedShape({ bed }: BedShapeProps) {
 
   const widthPx = metersToPixels(bed.width);
   const heightPx = metersToPixels(bed.height);
-  const xPx = metersToPixels(bed.x);
-  const yPx = metersToPixels(bed.y);
+  // bed.x and bed.y are top-left corner, but we render with center for rotation
+  const xPx = metersToPixels(bed.x + bed.width / 2);
+  const yPx = metersToPixels(bed.y + bed.height / 2);
 
   const handleSelect = useCallback(() => {
     if (!bed.isLocked) {
@@ -77,23 +77,22 @@ export function BedShape({ bed }: BedShapeProps) {
     (e: Konva.KonvaEventObject<DragEvent>) => {
       if (bed.isLocked || !plot) return;
 
-      // Account for the offset when getting position
-      // The group's x,y represents the center due to offsetX/offsetY
+      // Group position is the center (due to offsetX/offsetY)
       const centerX = pixelsToMeters(e.target.x());
       const centerY = pixelsToMeters(e.target.y());
 
-      // Convert center position to top-left corner
-      const newX = centerX;
-      const newY = centerY;
+      // Convert center to top-left corner for storage
+      const newX = centerX - bed.width / 2;
+      const newY = centerY - bed.height / 2;
 
-      // Constrain to plot bounds
+      // Constrain to plot bounds (keep top-left within bounds)
       const constrainedX = Math.max(
-        bed.width / 2,
-        Math.min(newX, plot.boundary.width - bed.width / 2)
+        0,
+        Math.min(newX, plot.boundary.width - bed.width)
       );
       const constrainedY = Math.max(
-        bed.height / 2,
-        Math.min(newY, plot.boundary.height - bed.height / 2)
+        0,
+        Math.min(newY, plot.boundary.height - bed.height)
       );
 
       updateBed(bed.id, { x: constrainedX, y: constrainedY });
@@ -105,20 +104,14 @@ export function BedShape({ bed }: BedShapeProps) {
     (corner: 'nw' | 'ne' | 'se' | 'sw', localDelta: { x: number; y: number }) => {
       if (bed.isLocked) return;
 
-      // Current bed bounds (center position)
-      const centerX = bed.x;
-      const centerY = bed.y;
-      const halfWidth = bed.width / 2;
-      const halfHeight = bed.height / 2;
+      // bed.x, bed.y are top-left corner
+      const left = bed.x;
+      const top = bed.y;
+      const right = bed.x + bed.width;
+      const bottom = bed.y + bed.height;
 
-      // Calculate corners in world space
-      const left = centerX - halfWidth;
-      const right = centerX + halfWidth;
-      const top = centerY - halfHeight;
-      const bottom = centerY + halfHeight;
-
-      let newCenterX = centerX;
-      let newCenterY = centerY;
+      let newX = bed.x;
+      let newY = bed.y;
       let newWidth = bed.width;
       let newHeight = bed.height;
 
@@ -128,41 +121,37 @@ export function BedShape({ bed }: BedShapeProps) {
           // Moving top-left corner
           newWidth = Math.max(MIN_SIZE_METERS, bed.width - localDelta.x);
           newHeight = Math.max(MIN_SIZE_METERS, bed.height - localDelta.y);
-          newCenterX = right - newWidth / 2;
-          newCenterY = bottom - newHeight / 2;
+          newX = right - newWidth;
+          newY = bottom - newHeight;
           break;
         case 'ne':
           // Moving top-right corner
           newWidth = Math.max(MIN_SIZE_METERS, bed.width + localDelta.x);
           newHeight = Math.max(MIN_SIZE_METERS, bed.height - localDelta.y);
-          newCenterX = left + newWidth / 2;
-          newCenterY = bottom - newHeight / 2;
+          newY = bottom - newHeight;
           break;
         case 'se':
           // Moving bottom-right corner
           newWidth = Math.max(MIN_SIZE_METERS, bed.width + localDelta.x);
           newHeight = Math.max(MIN_SIZE_METERS, bed.height + localDelta.y);
-          newCenterX = left + newWidth / 2;
-          newCenterY = top + newHeight / 2;
           break;
         case 'sw':
           // Moving bottom-left corner
           newWidth = Math.max(MIN_SIZE_METERS, bed.width - localDelta.x);
           newHeight = Math.max(MIN_SIZE_METERS, bed.height + localDelta.y);
-          newCenterX = right - newWidth / 2;
-          newCenterY = top + newHeight / 2;
+          newX = right - newWidth;
           break;
       }
 
       // Constrain to plot bounds
       if (plot) {
-        newCenterX = Math.max(newWidth / 2, Math.min(newCenterX, plot.boundary.width - newWidth / 2));
-        newCenterY = Math.max(newHeight / 2, Math.min(newCenterY, plot.boundary.height - newHeight / 2));
+        newX = Math.max(0, Math.min(newX, plot.boundary.width - newWidth));
+        newY = Math.max(0, Math.min(newY, plot.boundary.height - newHeight));
       }
 
       updateBed(bed.id, {
-        x: newCenterX,
-        y: newCenterY,
+        x: newX,
+        y: newY,
         width: newWidth,
         height: newHeight,
       });
@@ -196,12 +185,6 @@ export function BedShape({ bed }: BedShapeProps) {
     [bed.id, bed.isLocked, xPx, yPx, widthPx, heightPx, updateBed]
   );
 
-  // Reset position on re-render if dragged outside bounds
-  useEffect(() => {
-    if (groupRef.current) {
-      groupRef.current.position({ x: xPx, y: yPx });
-    }
-  }, [xPx, yPx]);
 
   const cornerHandles = [
     { id: 'nw', x: 0, y: 0 },
@@ -212,7 +195,6 @@ export function BedShape({ bed }: BedShapeProps) {
 
   return (
     <Group
-      ref={groupRef}
       x={xPx}
       y={yPx}
       rotation={bed.rotationDeg}
