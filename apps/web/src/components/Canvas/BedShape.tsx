@@ -371,11 +371,14 @@ export function BedShape({ bed }: BedShapeProps) {
       {isSelected && !bed.isLocked && (
         <>
           {cornerHandles.map((handle) => {
+            const handleX = handle.x - widthPx / 2;
+            const handleY = handle.y - heightPx / 2;
+
             return (
               <Circle
                 key={handle.id}
-                x={handle.x - widthPx / 2}
-                y={handle.y - heightPx / 2}
+                x={handleX}
+                y={handleY}
                 radius={HANDLE_SIZE}
                 fill="white"
                 stroke="#2196f3"
@@ -384,24 +387,27 @@ export function BedShape({ bed }: BedShapeProps) {
                 onDragStart={(e) => {
                   // Prevent stage from dragging when dragging resize handle
                   e.cancelBubble = true;
-                  // Store initial position
+                  // Store absolute starting position (not relative)
                   const target = e.target as any;
-                  target.lastDragX = e.target.x();
-                  target.lastDragY = e.target.y();
+                  target.dragStartAbsX = e.target.absolutePosition().x;
+                  target.dragStartAbsY = e.target.absolutePosition().y;
+                  target.lastAbsX = target.dragStartAbsX;
+                  target.lastAbsY = target.dragStartAbsY;
                 }}
                 onDragMove={(e) => {
                   // Prevent stage from dragging
                   e.cancelBubble = true;
                   const target = e.target as any;
 
-                  // Get previous position (or initial if first move)
-                  const prevX = target.lastDragX ?? (handle.x - widthPx / 2);
-                  const prevY = target.lastDragY ?? (handle.y - heightPx / 2);
+                  // Get current absolute position
+                  const currentAbsPos = e.target.absolutePosition();
+                  const prevAbsX = target.lastAbsX ?? currentAbsPos.x;
+                  const prevAbsY = target.lastAbsY ?? currentAbsPos.y;
 
-                  // Calculate incremental delta since last frame
+                  // Calculate incremental delta in absolute coordinates
                   const incrementalDelta = {
-                    x: pixelsToMeters(e.target.x() - prevX),
-                    y: pixelsToMeters(e.target.y() - prevY),
+                    x: pixelsToMeters(currentAbsPos.x - prevAbsX),
+                    y: pixelsToMeters(currentAbsPos.y - prevAbsY),
                   };
 
                   // Only apply if there's actual movement
@@ -409,23 +415,25 @@ export function BedShape({ bed }: BedShapeProps) {
                     handleResizePreview(handle.id, incrementalDelta);
                   }
 
-                  // Store current position for next frame
-                  target.lastDragX = e.target.x();
-                  target.lastDragY = e.target.y();
+                  // Store current absolute position for next frame
+                  target.lastAbsX = currentAbsPos.x;
+                  target.lastAbsY = currentAbsPos.y;
                 }}
                 onDragEnd={(e) => {
-                  // Clean up stored position
+                  // Clean up stored positions
                   const target = e.target as any;
-                  delete target.lastDragX;
-                  delete target.lastDragY;
+                  delete target.dragStartAbsX;
+                  delete target.dragStartAbsY;
+                  delete target.lastAbsX;
+                  delete target.lastAbsY;
 
                   // Apply the final resize
                   handleResizeEnd();
 
                   // Reset handle position to match bed corner
                   e.target.position({
-                    x: handle.x - widthPx / 2,
-                    y: handle.y - heightPx / 2,
+                    x: handleX,
+                    y: handleY,
                   });
                 }}
               />
