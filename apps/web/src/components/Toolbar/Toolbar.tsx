@@ -1,6 +1,7 @@
 import { usePlotStore } from '../../store/plotStore';
 import { useUIStore } from '../../store/uiStore';
 import { LockToggle } from './LockToggle';
+import { deleteBed, deletePlot } from '../../api/client';
 
 const buttonStyle = {
   padding: '8px 16px',
@@ -32,7 +33,7 @@ const disabledButtonStyle = {
 };
 
 export function Toolbar() {
-  const { plot, selectedBedId, beds, removeBed } = usePlotStore();
+  const { plot, selectedBedId, beds, removeBed, clearPlot } = usePlotStore();
   const { currentTool, setCurrentTool, openAddBedModal } = useUIStore();
 
   const selectedBed = beds.find((b) => b.id === selectedBedId);
@@ -40,15 +41,32 @@ export function Toolbar() {
   const handleDeleteBed = async () => {
     if (!selectedBedId) return;
 
+    if (!confirm('Are you sure you want to delete this bed?')) {
+      return;
+    }
+
     try {
-      const response = await fetch(`/api/beds/${selectedBedId}`, {
-        method: 'DELETE',
-      });
-      if (response.ok) {
-        removeBed(selectedBedId);
-      }
+      await deleteBed(selectedBedId);
+      removeBed(selectedBedId);
     } catch (error) {
       console.error('Failed to delete bed:', error);
+      alert('Failed to delete bed. Please try again.');
+    }
+  };
+
+  const handleDeletePlot = async () => {
+    if (!plot) return;
+
+    if (!confirm('Are you sure you want to delete this plot? This will also delete all beds and seasons associated with it.')) {
+      return;
+    }
+
+    try {
+      await deletePlot(plot.id);
+      clearPlot();
+    } catch (error) {
+      console.error('Failed to delete plot:', error);
+      alert('Failed to delete plot. Please try again.');
     }
   };
 
@@ -91,6 +109,20 @@ export function Toolbar() {
         Add Bed
       </button>
 
+      {plot && !selectedBed && (
+        <button
+          style={{
+            ...inactiveButtonStyle,
+            backgroundColor: '#ff5252',
+            color: 'white',
+          }}
+          onClick={handleDeletePlot}
+          title="Delete this plot and all its beds"
+        >
+          Delete Plot
+        </button>
+      )}
+
       {selectedBed && (
         <>
           <div
@@ -108,8 +140,9 @@ export function Toolbar() {
               color: 'white',
             }}
             onClick={handleDeleteBed}
+            title="Delete this bed"
           >
-            Delete
+            Delete Bed
           </button>
         </>
       )}
