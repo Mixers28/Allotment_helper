@@ -177,9 +177,8 @@ export function PlotCanvas() {
       scaleY={stageScale}
       x={stagePos.x}
       y={stagePos.y}
-      draggable={currentTool === 'select' && !isDrawingPlot}
+      draggable={false}
       onWheel={handleWheel}
-      onDragEnd={(e) => setStagePos({ x: e.target.x(), y: e.target.y() })}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

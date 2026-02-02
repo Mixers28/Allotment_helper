@@ -82,6 +82,15 @@ export function BedShape({ bed }: BedShapeProps) {
     [bed.isLocked]
   );
 
+  const handleDragMove = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      if (bed.isLocked) return;
+      // Continue preventing stage drag during the entire drag operation
+      e.cancelBubble = true;
+    },
+    [bed.isLocked]
+  );
+
   const handleDragEnd = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
       if (bed.isLocked || !plot) return;
@@ -211,6 +220,7 @@ export function BedShape({ bed }: BedShapeProps) {
       onClick={handleSelect}
       onTap={handleSelect}
       onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
       onDragEnd={handleDragEnd}
       offsetX={widthPx / 2}
       offsetY={heightPx / 2}
