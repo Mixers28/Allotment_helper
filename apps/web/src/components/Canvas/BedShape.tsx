@@ -324,39 +324,68 @@ export function BedShape({ bed }: BedShapeProps) {
       {/* Resize handles (only when selected and not locked) */}
       {isSelected && !bed.isLocked && (
         <>
-          {cornerHandles.map((handle) => (
-            <Circle
-              key={handle.id}
-              x={handle.x - widthPx / 2}
-              y={handle.y - heightPx / 2}
-              radius={HANDLE_SIZE}
-              fill="white"
-              stroke="#2196f3"
-              strokeWidth={2}
-              draggable
-              onDragStart={(e) => {
-                // Prevent stage from dragging when dragging resize handle
-                e.cancelBubble = true;
-              }}
-              onDragMove={(e) => {
-                // Prevent stage from dragging
-                e.cancelBubble = true;
-                // Get delta in local coordinates (pixels)
-                const localDelta = {
-                  x: pixelsToMeters(e.target.x() - (handle.x - widthPx / 2)),
-                  y: pixelsToMeters(e.target.y() - (handle.y - heightPx / 2)),
-                };
-                handleResize(handle.id, localDelta);
-              }}
-              onDragEnd={(e) => {
-                // Reset handle position after resize
-                e.target.position({
-                  x: handle.x - widthPx / 2,
-                  y: handle.y - heightPx / 2,
-                });
-              }}
-            />
-          ))}
+          {cornerHandles.map((handle) => {
+            // Use a ref-like approach to track the last position
+            let lastX = handle.x - widthPx / 2;
+            let lastY = handle.y - heightPx / 2;
+
+            return (
+              <Circle
+                key={handle.id}
+                x={handle.x - widthPx / 2}
+                y={handle.y - heightPx / 2}
+                radius={HANDLE_SIZE}
+                fill="white"
+                stroke="#2196f3"
+                strokeWidth={2}
+                draggable
+                onDragStart={(e) => {
+                  // Prevent stage from dragging when dragging resize handle
+                  e.cancelBubble = true;
+                  // Store initial position
+                  const target = e.target as any;
+                  target.lastDragX = e.target.x();
+                  target.lastDragY = e.target.y();
+                }}
+                onDragMove={(e) => {
+                  // Prevent stage from dragging
+                  e.cancelBubble = true;
+                  const target = e.target as any;
+
+                  // Get previous position (or initial if first move)
+                  const prevX = target.lastDragX ?? (handle.x - widthPx / 2);
+                  const prevY = target.lastDragY ?? (handle.y - heightPx / 2);
+
+                  // Calculate incremental delta since last frame
+                  const incrementalDelta = {
+                    x: pixelsToMeters(e.target.x() - prevX),
+                    y: pixelsToMeters(e.target.y() - prevY),
+                  };
+
+                  // Only apply if there's actual movement
+                  if (incrementalDelta.x !== 0 || incrementalDelta.y !== 0) {
+                    handleResize(handle.id, incrementalDelta);
+                  }
+
+                  // Store current position for next frame
+                  target.lastDragX = e.target.x();
+                  target.lastDragY = e.target.y();
+                }}
+                onDragEnd={(e) => {
+                  // Clean up stored position
+                  const target = e.target as any;
+                  delete target.lastDragX;
+                  delete target.lastDragY;
+
+                  // Reset handle position to match bed corner
+                  e.target.position({
+                    x: handle.x - widthPx / 2,
+                    y: handle.y - heightPx / 2,
+                  });
+                }}
+              />
+            );
+          })}
 
           {/* Rotation handle */}
           <Line
