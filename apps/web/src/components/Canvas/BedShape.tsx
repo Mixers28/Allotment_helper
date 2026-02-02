@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState, useRef } from 'react';
 import { Rect, Text, Group, Circle, Line } from 'react-konva';
 import type Konva from 'konva';
 import type { BedBase } from '@allotment/domain';
@@ -40,6 +40,14 @@ export function BedShape({ bed }: BedShapeProps) {
   const { currentSeasonId, bedSectionPlans, selectedSectionId, setSelectedSectionId } = useSeasonStore();
   const isSelected = selectedBedId === bed.id;
 
+  // Track resize preview state (only updates visual, not actual bed state)
+  const [resizePreview, setResizePreview] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
   // Enable persistence for this bed
   usePersistBed(bed.id);
 
@@ -61,11 +69,17 @@ export function BedShape({ bed }: BedShapeProps) {
     );
   }, [sectionPlan, currentSeasonId, bed.width, bed.height, bed.id]);
 
-  const widthPx = metersToPixels(bed.width);
-  const heightPx = metersToPixels(bed.height);
+  // Use resize preview if active, otherwise use actual bed dimensions
+  const displayX = resizePreview?.x ?? bed.x;
+  const displayY = resizePreview?.y ?? bed.y;
+  const displayWidth = resizePreview?.width ?? bed.width;
+  const displayHeight = resizePreview?.height ?? bed.height;
+
+  const widthPx = metersToPixels(displayWidth);
+  const heightPx = metersToPixels(displayHeight);
   // bed.x and bed.y are top-left corner, but we render with center for rotation
-  const xPx = metersToPixels(bed.x + bed.width / 2);
-  const yPx = metersToPixels(bed.y + bed.height / 2);
+  const xPx = metersToPixels(displayX + displayWidth / 2);
+  const yPx = metersToPixels(displayY + displayHeight / 2);
 
   const handleSelect = useCallback(() => {
     if (!bed.isLocked) {
@@ -118,45 +132,48 @@ export function BedShape({ bed }: BedShapeProps) {
     [bed.id, bed.isLocked, bed.width, bed.height, plot, updateBed]
   );
 
-  const handleResize = useCallback(
+  const handleResizePreview = useCallback(
     (corner: 'nw' | 'ne' | 'se' | 'sw', localDelta: { x: number; y: number }) => {
       if (bed.isLocked) return;
 
-      // bed.x, bed.y are top-left corner
-      const left = bed.x;
-      const top = bed.y;
-      const right = bed.x + bed.width;
-      const bottom = bed.y + bed.height;
+      // Use current preview or actual bed dimensions as base
+      const baseX = resizePreview?.x ?? bed.x;
+      const baseY = resizePreview?.y ?? bed.y;
+      const baseWidth = resizePreview?.width ?? bed.width;
+      const baseHeight = resizePreview?.height ?? bed.height;
 
-      let newX = bed.x;
-      let newY = bed.y;
-      let newWidth = bed.width;
-      let newHeight = bed.height;
+      const right = baseX + baseWidth;
+      const bottom = baseY + baseHeight;
+
+      let newX = baseX;
+      let newY = baseY;
+      let newWidth = baseWidth;
+      let newHeight = baseHeight;
 
       // Apply delta based on corner
       switch (corner) {
         case 'nw':
           // Moving top-left corner
-          newWidth = Math.max(MIN_SIZE_METERS, bed.width - localDelta.x);
-          newHeight = Math.max(MIN_SIZE_METERS, bed.height - localDelta.y);
+          newWidth = Math.max(MIN_SIZE_METERS, baseWidth - localDelta.x);
+          newHeight = Math.max(MIN_SIZE_METERS, baseHeight - localDelta.y);
           newX = right - newWidth;
           newY = bottom - newHeight;
           break;
         case 'ne':
           // Moving top-right corner
-          newWidth = Math.max(MIN_SIZE_METERS, bed.width + localDelta.x);
-          newHeight = Math.max(MIN_SIZE_METERS, bed.height - localDelta.y);
+          newWidth = Math.max(MIN_SIZE_METERS, baseWidth + localDelta.x);
+          newHeight = Math.max(MIN_SIZE_METERS, baseHeight - localDelta.y);
           newY = bottom - newHeight;
           break;
         case 'se':
           // Moving bottom-right corner
-          newWidth = Math.max(MIN_SIZE_METERS, bed.width + localDelta.x);
-          newHeight = Math.max(MIN_SIZE_METERS, bed.height + localDelta.y);
+          newWidth = Math.max(MIN_SIZE_METERS, baseWidth + localDelta.x);
+          newHeight = Math.max(MIN_SIZE_METERS, baseHeight + localDelta.y);
           break;
         case 'sw':
           // Moving bottom-left corner
-          newWidth = Math.max(MIN_SIZE_METERS, bed.width - localDelta.x);
-          newHeight = Math.max(MIN_SIZE_METERS, bed.height + localDelta.y);
+          newWidth = Math.max(MIN_SIZE_METERS, baseWidth - localDelta.x);
+          newHeight = Math.max(MIN_SIZE_METERS, baseHeight + localDelta.y);
           newX = right - newWidth;
           break;
       }
@@ -167,15 +184,31 @@ export function BedShape({ bed }: BedShapeProps) {
         newY = Math.max(0, Math.min(newY, plot.boundary.height - newHeight));
       }
 
-      updateBed(bed.id, {
+      // Update preview (visual only)
+      setResizePreview({
         x: newX,
         y: newY,
         width: newWidth,
         height: newHeight,
       });
     },
-    [bed, plot, updateBed]
+    [bed, plot, resizePreview]
   );
+
+  const handleResizeEnd = useCallback(() => {
+    if (!resizePreview) return;
+
+    // Apply the final resize to the bed
+    updateBed(bed.id, {
+      x: resizePreview.x,
+      y: resizePreview.y,
+      width: resizePreview.width,
+      height: resizePreview.height,
+    });
+
+    // Clear preview
+    setResizePreview(null);
+  }, [bed.id, resizePreview, updateBed]);
 
   const handleRotate = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
@@ -325,10 +358,6 @@ export function BedShape({ bed }: BedShapeProps) {
       {isSelected && !bed.isLocked && (
         <>
           {cornerHandles.map((handle) => {
-            // Use a ref-like approach to track the last position
-            let lastX = handle.x - widthPx / 2;
-            let lastY = handle.y - heightPx / 2;
-
             return (
               <Circle
                 key={handle.id}
@@ -364,7 +393,7 @@ export function BedShape({ bed }: BedShapeProps) {
 
                   // Only apply if there's actual movement
                   if (incrementalDelta.x !== 0 || incrementalDelta.y !== 0) {
-                    handleResize(handle.id, incrementalDelta);
+                    handleResizePreview(handle.id, incrementalDelta);
                   }
 
                   // Store current position for next frame
@@ -376,6 +405,9 @@ export function BedShape({ bed }: BedShapeProps) {
                   const target = e.target as any;
                   delete target.lastDragX;
                   delete target.lastDragY;
+
+                  // Apply the final resize
+                  handleResizeEnd();
 
                   // Reset handle position to match bed corner
                   e.target.position({
