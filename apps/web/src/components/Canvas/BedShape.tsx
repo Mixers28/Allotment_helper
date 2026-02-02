@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useRef } from 'react';
+import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import { Rect, Text, Group, Circle, Line } from 'react-konva';
 import type Konva from 'konva';
 import type { BedBase } from '@allotment/domain';
@@ -70,10 +70,24 @@ export function BedShape({ bed }: BedShapeProps) {
   }, [sectionPlan, currentSeasonId, bed.width, bed.height, bed.id]);
 
   // Use resize preview if active, otherwise use actual bed dimensions
-  const displayX = resizePreview?.x ?? bed.x;
-  const displayY = resizePreview?.y ?? bed.y;
-  const displayWidth = resizePreview?.width ?? bed.width;
-  const displayHeight = resizePreview?.height ?? bed.height;
+  // Keep using preview until bed props match the preview values (prevents jump)
+  const bedMatchesPreview = resizePreview &&
+    Math.abs(bed.x - resizePreview.x) < 0.001 &&
+    Math.abs(bed.y - resizePreview.y) < 0.001 &&
+    Math.abs(bed.width - resizePreview.width) < 0.001 &&
+    Math.abs(bed.height - resizePreview.height) < 0.001;
+
+  const displayX = (resizePreview && !bedMatchesPreview) ? resizePreview.x : bed.x;
+  const displayY = (resizePreview && !bedMatchesPreview) ? resizePreview.y : bed.y;
+  const displayWidth = (resizePreview && !bedMatchesPreview) ? resizePreview.width : bed.width;
+  const displayHeight = (resizePreview && !bedMatchesPreview) ? resizePreview.height : bed.height;
+
+  // Clear preview when bed props match the preview (prevents lingering preview state)
+  useEffect(() => {
+    if (bedMatchesPreview) {
+      setResizePreview(null);
+    }
+  }, [bedMatchesPreview]);
 
   const widthPx = metersToPixels(displayWidth);
   const heightPx = metersToPixels(displayHeight);
@@ -206,8 +220,7 @@ export function BedShape({ bed }: BedShapeProps) {
       height: resizePreview.height,
     });
 
-    // Clear preview
-    setResizePreview(null);
+    // Preview will auto-clear once bed props match (see bedMatchesPreview check above)
   }, [bed.id, resizePreview, updateBed]);
 
   const handleRotate = useCallback(
