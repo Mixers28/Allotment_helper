@@ -14,16 +14,23 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 console.log('CORS allowed origins:', allowedOrigins);
 
-// Determine CORS origin setting
-const corsOrigin = allowedOrigins.includes('*')
-  ? true  // Allow all origins
-  : allowedOrigins;
-
+// Allow all Vercel preview deployments and configured origins
 await server.register(cors, {
-  origin: corsOrigin,
+  origin: (origin, cb) => {
+    // No origin (same-origin) or Vercel deployment or configured origin
+    if (!origin ||
+        origin.endsWith('.vercel.app') ||
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin)) {
+      cb(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      cb(new Error('Not allowed by CORS'), false);
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: !allowedOrigins.includes('*'), // Can't use credentials with wildcard
+  credentials: false,
 });
 
 server.get('/health', async () => ({ status: 'ok' }));
