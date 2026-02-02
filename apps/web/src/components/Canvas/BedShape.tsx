@@ -73,6 +73,15 @@ export function BedShape({ bed }: BedShapeProps) {
     }
   }, [bed.id, bed.isLocked, setSelectedBedId]);
 
+  const handleDragStart = useCallback(
+    (e: Konva.KonvaEventObject<DragEvent>) => {
+      if (bed.isLocked) return;
+      // Prevent the stage from being dragged when dragging a bed
+      e.cancelBubble = true;
+    },
+    [bed.isLocked]
+  );
+
   const handleDragEnd = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
       if (bed.isLocked || !plot) return;
@@ -201,6 +210,7 @@ export function BedShape({ bed }: BedShapeProps) {
       draggable={!bed.isLocked}
       onClick={handleSelect}
       onTap={handleSelect}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       offsetX={widthPx / 2}
       offsetY={heightPx / 2}
@@ -314,7 +324,13 @@ export function BedShape({ bed }: BedShapeProps) {
               stroke="#2196f3"
               strokeWidth={2}
               draggable
+              onDragStart={(e) => {
+                // Prevent stage from dragging when dragging resize handle
+                e.cancelBubble = true;
+              }}
               onDragMove={(e) => {
+                // Prevent stage from dragging
+                e.cancelBubble = true;
                 // Get delta in local coordinates (pixels)
                 const localDelta = {
                   x: pixelsToMeters(e.target.x() - (handle.x - widthPx / 2)),
@@ -346,7 +362,15 @@ export function BedShape({ bed }: BedShapeProps) {
             stroke="white"
             strokeWidth={2}
             draggable
-            onDragMove={handleRotate}
+            onDragStart={(e) => {
+              // Prevent stage from dragging when dragging rotation handle
+              e.cancelBubble = true;
+            }}
+            onDragMove={(e) => {
+              // Prevent stage from dragging
+              e.cancelBubble = true;
+              handleRotate(e);
+            }}
             onDragEnd={(e) => {
               e.target.position({
                 x: 0,
