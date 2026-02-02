@@ -16,21 +16,23 @@ model PlotBase {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   beds         BedBase[]
+  seasons      Season[]
 }
 
 model BedBase {
-  id          String   @id @default(uuid())
-  plotId      String
-  plot        PlotBase @relation(fields: [plotId], references: [id], onDelete: Cascade)
-  name        String
-  x           Float
-  y           Float
-  width       Float
-  height      Float
-  rotationDeg Float    @default(0)
-  isLocked    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String           @id @default(uuid())
+  plotId       String
+  plot         PlotBase         @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  name         String
+  x            Float
+  y            Float
+  width        Float
+  height       Float
+  rotationDeg  Float            @default(0)
+  isLocked     Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  sectionPlans BedSectionPlan[]
 
   @@index([plotId])
 }
@@ -54,4 +56,35 @@ model Variety {
   growthHabit     String? // upright | bush | vine
 
   @@index([cropId])
+}
+
+// Sprint 2: Season management
+model Season {
+  id              String           @id @default(uuid())
+  plotId          String
+  plot            PlotBase         @relation(fields: [plotId], references: [id], onDelete: Cascade)
+  label           String
+  startDate       DateTime
+  endDate         DateTime
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  bedSectionPlans BedSectionPlan[]
+
+  @@index([plotId])
+}
+
+model BedSectionPlan {
+  id             String   @id @default(uuid())
+  seasonId       String
+  season         Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  bedId          String
+  bed            BedBase  @relation(fields: [bedId], references: [id], onDelete: Cascade)
+  mode           String   @default("length_splits")
+  definitionJson Json     // { cuts: number[] }
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([seasonId, bedId]) // One plan per bed per season
+  @@index([seasonId])
+  @@index([bedId])
 }

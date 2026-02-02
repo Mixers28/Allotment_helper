@@ -2,6 +2,8 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { plotRoutes } from './routes/plots.js';
 import { bedRoutes } from './routes/beds.js';
+import { seasonRoutes, plotSeasonRoutes } from './routes/seasons.js';
+import { bedPlanRoutes, seasonBedPlanRoutes } from './routes/bedPlans.js';
 
 const server = Fastify({ logger: true });
 
@@ -28,6 +30,12 @@ server.get('/health', async () => ({ status: 'ok' }));
 
 await server.register(plotRoutes, { prefix: '/plots' });
 await server.register(bedRoutes, { prefix: '/beds' });
+await server.register(seasonRoutes, { prefix: '/seasons' });
+await server.register(bedPlanRoutes, { prefix: '/bed-plans' });
+
+// Nested routes
+await server.register(plotSeasonRoutes, { prefix: '/plots/:plotId/seasons' });
+await server.register(seasonBedPlanRoutes, { prefix: '/seasons/:seasonId/bed-plans' });
 
 const port = Number(process.env.PORT) || 3001;
 

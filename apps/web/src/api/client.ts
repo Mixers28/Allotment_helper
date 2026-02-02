@@ -3,6 +3,11 @@ import type {
   UpdatePlotInput,
   CreateBedInput,
   UpdateBedInput,
+  CreateSeasonInput,
+  UpdateSeasonInput,
+  CreateBedSectionPlanInput,
+  UpdateBedSectionPlanInput,
+  LengthSplitDefinition,
 } from '@allotment/domain';
 
 // Use environment variable in production, fallback to /api for local dev with proxy
@@ -113,6 +118,94 @@ export async function updateBed(
 
 export async function deleteBed(id: string): Promise<void> {
   return request(`/beds/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// Season types
+export interface SeasonResponse {
+  id: string;
+  plotId: string;
+  label: string;
+  startDate: string;
+  endDate: string;
+  createdAt: string;
+  updatedAt: string;
+  bedSectionPlans: BedSectionPlanResponse[];
+}
+
+export interface BedSectionPlanResponse {
+  id: string;
+  seasonId: string;
+  bedId: string;
+  mode: 'length_splits';
+  definition: LengthSplitDefinition;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Season endpoints
+export async function fetchSeasons(plotId: string): Promise<SeasonResponse[]> {
+  return request(`/plots/${plotId}/seasons`);
+}
+
+export async function fetchSeason(id: string): Promise<SeasonResponse> {
+  return request(`/seasons/${id}`);
+}
+
+export async function createSeason(
+  plotId: string,
+  data: CreateSeasonInput
+): Promise<SeasonResponse> {
+  return request(`/plots/${plotId}/seasons`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateSeason(
+  id: string,
+  data: UpdateSeasonInput
+): Promise<SeasonResponse> {
+  return request(`/seasons/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteSeason(id: string): Promise<void> {
+  return request(`/seasons/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// Bed Section Plan endpoints
+export async function fetchBedPlans(seasonId: string): Promise<BedSectionPlanResponse[]> {
+  return request(`/seasons/${seasonId}/bed-plans`);
+}
+
+export async function createBedPlan(
+  seasonId: string,
+  data: CreateBedSectionPlanInput
+): Promise<BedSectionPlanResponse> {
+  return request(`/seasons/${seasonId}/bed-plans`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateBedPlan(
+  id: string,
+  data: UpdateBedSectionPlanInput
+): Promise<BedSectionPlanResponse> {
+  return request(`/bed-plans/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteBedPlan(id: string): Promise<void> {
+  return request(`/bed-plans/${id}`, {
     method: 'DELETE',
   });
 }

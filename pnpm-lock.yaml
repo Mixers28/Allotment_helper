@@ -66,6 +66,9 @@ importers:
       '@allotment/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@allotment/placement':
+        specifier: workspace:*
+        version: link:../../packages/placement
       '@hookform/resolvers':
         specifier: ^3.3.4
         version: 3.10.0(react-hook-form@7.71.1(react@18.3.1))
@@ -124,6 +127,10 @@ importers:
         version: 1.6.1(@types/node@20.19.30)
 
   packages/placement:
+    dependencies:
+      '@allotment/domain':
+        specifier: workspace:*
+        version: link:../domain
     devDependencies:
       typescript:
         specifier: ^5.3.3

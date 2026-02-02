@@ -1,15 +1,17 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useMemo } from 'react';
 import { Rect, Text, Group, Circle, Line } from 'react-konva';
 import type Konva from 'konva';
 import type { BedBase } from '@allotment/domain';
 import { usePlotStore } from '../../store/plotStore';
+import { useSeasonStore } from '../../store/seasonStore';
 import {
   metersToPixels,
   pixelsToMeters,
   formatDimension,
   snapAngle,
 } from '../../utils/geometry';
-import { usePersistBed } from '../../hooks/usePersist';
+import { usePersistBed, usePersistBedPlan } from '../../hooks/usePersist';
+import { calculateLengthSplitSections } from '@allotment/placement';
 
 interface BedShapeProps {
   bed: BedBase;
@@ -19,13 +21,46 @@ const MIN_SIZE_METERS = 0.3;
 const HANDLE_SIZE = 8;
 const ROTATION_HANDLE_DISTANCE = 30;
 
+// Pastel colors for sections
+const SECTION_COLORS = [
+  'rgba(144, 238, 144, 0.4)', // light green
+  'rgba(173, 216, 230, 0.4)', // light blue
+  'rgba(255, 255, 224, 0.4)', // light yellow
+  'rgba(255, 218, 185, 0.4)', // peach
+  'rgba(221, 160, 221, 0.4)', // plum
+  'rgba(176, 224, 230, 0.4)', // powder blue
+  'rgba(255, 228, 196, 0.4)', // bisque
+  'rgba(152, 251, 152, 0.4)', // pale green
+  'rgba(175, 238, 238, 0.4)', // pale turquoise
+  'rgba(255, 182, 193, 0.4)', // light pink
+];
+
 export function BedShape({ bed }: BedShapeProps) {
   const groupRef = useRef<Konva.Group>(null);
   const { selectedBedId, setSelectedBedId, updateBed, plot } = usePlotStore();
+  const { currentSeasonId, bedSectionPlans, selectedSectionId, setSelectedSectionId } = useSeasonStore();
   const isSelected = selectedBedId === bed.id;
 
   // Enable persistence for this bed
   usePersistBed(bed.id);
+
+  // Get the section plan for this bed (if any)
+  const sectionPlan = bedSectionPlans.find((p) => p.bedId === bed.id);
+
+  // Enable persistence for section plan
+  usePersistBedPlan(sectionPlan?.id ?? '');
+
+  // Calculate sections from plan
+  const sections = useMemo(() => {
+    if (!sectionPlan || !currentSeasonId) return [];
+    return calculateLengthSplitSections(
+      bed.width,
+      bed.height,
+      sectionPlan.definition.cuts,
+      sectionPlan.id,
+      bed.id
+    );
+  }, [sectionPlan, currentSeasonId, bed.width, bed.height, bed.id]);
 
   const widthPx = metersToPixels(bed.width);
   const heightPx = metersToPixels(bed.height);
@@ -212,6 +247,47 @@ export function BedShape({ bed }: BedShapeProps) {
           fontSize={14}
         />
       )}
+
+      {/* Section overlays (only when season is active) */}
+      {currentSeasonId && sections.length > 0 && sections.map((section, idx) => {
+        const sectionYPx = metersToPixels(section.boundsLocal.y0);
+        const sectionHeightPx = metersToPixels(section.boundsLocal.y1 - section.boundsLocal.y0);
+        const isSectionSelected = selectedSectionId === section.id;
+
+        return (
+          <Group key={section.id}>
+            {/* Section fill */}
+            <Rect
+              x={-widthPx / 2}
+              y={-heightPx / 2 + sectionYPx}
+              width={widthPx}
+              height={sectionHeightPx}
+              fill={SECTION_COLORS[idx % SECTION_COLORS.length]}
+              stroke={isSectionSelected ? '#ff9800' : '#666'}
+              strokeWidth={isSectionSelected ? 2 : 1}
+              dash={isSectionSelected ? undefined : [4, 4]}
+              onClick={(e) => {
+                e.cancelBubble = true;
+                setSelectedSectionId(section.id);
+                setSelectedBedId(bed.id);
+              }}
+            />
+            {/* Section label */}
+            <Text
+              x={-widthPx / 2 + widthPx / 2}
+              y={-heightPx / 2 + sectionYPx + sectionHeightPx / 2}
+              text={section.name}
+              fontSize={14}
+              fontStyle="bold"
+              fill="#333"
+              align="center"
+              verticalAlign="middle"
+              offsetX={20}
+              offsetY={7}
+            />
+          </Group>
+        );
+      })}
 
       {/* Resize handles (only when selected and not locked) */}
       {isSelected && !bed.isLocked && (

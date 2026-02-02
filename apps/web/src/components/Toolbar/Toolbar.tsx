@@ -55,16 +55,9 @@ export function Toolbar() {
   return (
     <div
       style={{
-        position: 'absolute',
-        top: 10,
-        left: 10,
-        zIndex: 100,
         display: 'flex',
         gap: '8px',
-        padding: '10px',
-        backgroundColor: 'white',
-        borderRadius: '8px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        alignItems: 'center',
       }}
     >
       <button
