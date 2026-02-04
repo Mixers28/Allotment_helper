@@ -3,6 +3,7 @@ import { Stage, Layer, Rect, Group } from 'react-konva';
 import type Konva from 'konva';
 import { usePlotStore } from '../../store/plotStore';
 import { useUIStore } from '../../store/uiStore';
+import { useSeasonStore } from '../../store/seasonStore';
 import { PlotBoundary } from './PlotBoundary';
 import { BedShape } from './BedShape';
 import { DrawingRect } from './DrawingRect';
@@ -17,6 +18,7 @@ export function PlotCanvas() {
   const [stagePos, setStagePos] = useState({ x: CANVAS_PADDING, y: CANVAS_PADDING });
 
   const { plot, beds, isLoading, setPlot, setBeds, setSelectedBedId } = usePlotStore();
+  const { clearSeasons } = useSeasonStore();
   const {
     currentTool,
     isDrawingPlot,
@@ -124,6 +126,7 @@ export function PlotCanvas() {
           updatedAt: new Date(newPlot.updatedAt),
         });
         setBeds([]);
+        clearSeasons();
         setCurrentTool('select');
       } catch (error) {
         console.error('Failed to create plot:', error);
@@ -137,6 +140,7 @@ export function PlotCanvas() {
     drawCurrent,
     setPlot,
     setBeds,
+    clearSeasons,
     setCurrentTool,
     endDrawingPlot,
   ]);

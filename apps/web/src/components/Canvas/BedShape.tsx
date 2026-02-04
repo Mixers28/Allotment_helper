@@ -39,6 +39,7 @@ export function BedShape({ bed }: BedShapeProps) {
   const { selectedBedId, setSelectedBedId, updateBed, plot } = usePlotStore();
   const { currentSeasonId, bedSectionPlans, selectedSectionId, setSelectedSectionId } = useSeasonStore();
   const isSelected = selectedBedId === bed.id;
+  const geometryLocked = bed.isLocked || !!currentSeasonId;
 
   // Track resize preview state (only updates visual, not actual bed state)
   const [resizePreview, setResizePreview] = useState<{
@@ -96,32 +97,30 @@ export function BedShape({ bed }: BedShapeProps) {
   const yPx = metersToPixels(displayY + displayHeight / 2);
 
   const handleSelect = useCallback(() => {
-    if (!bed.isLocked) {
-      setSelectedBedId(bed.id);
-    }
-  }, [bed.id, bed.isLocked, setSelectedBedId]);
+    setSelectedBedId(bed.id);
+  }, [bed.id, setSelectedBedId]);
 
   const handleDragStart = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
-      if (bed.isLocked) return;
+      if (geometryLocked) return;
       // Prevent the stage from being dragged when dragging a bed
       e.cancelBubble = true;
     },
-    [bed.isLocked]
+    [geometryLocked]
   );
 
   const handleDragMove = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
-      if (bed.isLocked) return;
+      if (geometryLocked) return;
       // Continue preventing stage drag during the entire drag operation
       e.cancelBubble = true;
     },
-    [bed.isLocked]
+    [geometryLocked]
   );
 
   const handleDragEnd = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
-      if (bed.isLocked || !plot) return;
+      if (geometryLocked || !plot) return;
 
       // Group position is the center (due to offsetX/offsetY)
       const centerX = pixelsToMeters(e.target.x());
@@ -143,12 +142,12 @@ export function BedShape({ bed }: BedShapeProps) {
 
       updateBed(bed.id, { x: constrainedX, y: constrainedY });
     },
-    [bed.id, bed.isLocked, bed.width, bed.height, plot, updateBed]
+    [bed.id, geometryLocked, bed.width, bed.height, plot, updateBed]
   );
 
   const handleResizePreview = useCallback(
     (corner: 'nw' | 'ne' | 'se' | 'sw', localDelta: { x: number; y: number }) => {
-      if (bed.isLocked) return;
+      if (geometryLocked) return;
 
       // Use current preview or actual bed dimensions as base
       const baseX = resizePreview?.x ?? bed.x;
@@ -206,10 +205,11 @@ export function BedShape({ bed }: BedShapeProps) {
         height: newHeight,
       });
     },
-    [bed, plot, resizePreview]
+    [bed, plot, resizePreview, geometryLocked]
   );
 
   const handleResizeEnd = useCallback(() => {
+    if (geometryLocked) return;
     if (!resizePreview) return;
 
     // Apply the final resize to the bed
@@ -221,11 +221,11 @@ export function BedShape({ bed }: BedShapeProps) {
     });
 
     // Preview will auto-clear once bed props match (see bedMatchesPreview check above)
-  }, [bed.id, resizePreview, updateBed]);
+  }, [bed.id, resizePreview, updateBed, geometryLocked]);
 
   const handleRotate = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
-      if (bed.isLocked) return;
+      if (geometryLocked) return;
 
       const stage = e.target.getStage();
       if (!stage) return;
@@ -246,7 +246,7 @@ export function BedShape({ bed }: BedShapeProps) {
 
       updateBed(bed.id, { rotationDeg: snappedAngle });
     },
-    [bed.id, bed.isLocked, xPx, yPx, widthPx, heightPx, updateBed]
+    [bed.id, geometryLocked, xPx, yPx, widthPx, heightPx, updateBed]
   );
 
 
@@ -262,7 +262,7 @@ export function BedShape({ bed }: BedShapeProps) {
       x={xPx}
       y={yPx}
       rotation={bed.rotationDeg}
-      draggable={!bed.isLocked}
+      draggable={!geometryLocked}
       onClick={handleSelect}
       onTap={handleSelect}
       onDragStart={handleDragStart}
@@ -328,8 +328,8 @@ export function BedShape({ bed }: BedShapeProps) {
 
       {/* Section overlays (only when season is active) */}
       {currentSeasonId && sections.length > 0 && sections.map((section, idx) => {
-        const sectionYPx = metersToPixels(section.boundsLocal.y0);
-        const sectionHeightPx = metersToPixels(section.boundsLocal.y1 - section.boundsLocal.y0);
+        const sectionYPx = metersToPixels(section.boundsLocal.x0);
+        const sectionHeightPx = metersToPixels(section.boundsLocal.x1 - section.boundsLocal.x0);
         const isSectionSelected = selectedSectionId === section.id;
 
         return (
@@ -368,7 +368,7 @@ export function BedShape({ bed }: BedShapeProps) {
       })}
 
       {/* Resize handles (only when selected and not locked) */}
-      {isSelected && !bed.isLocked && (
+      {isSelected && !geometryLocked && (
         <>
           {cornerHandles.map((handle) => {
             const handleX = handle.x - widthPx / 2;

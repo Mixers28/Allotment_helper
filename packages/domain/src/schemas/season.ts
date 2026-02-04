@@ -9,10 +9,14 @@ export const CreateSeasonSchema = z.object({
   path: ['endDate'],
 });
 
-export const UpdateSeasonSchema = z.object({
-  label: z.string().min(1).max(100).optional(),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format').optional(),
+export const UpdateSeasonSchema = CreateSeasonSchema.partial().superRefine((data, ctx) => {
+  if (data.startDate && data.endDate && data.startDate > data.endDate) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'End date must be on or after start date',
+      path: ['endDate'],
+    });
+  }
 });
 
 export type CreateSeasonInput = z.infer<typeof CreateSeasonSchema>;

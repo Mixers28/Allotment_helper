@@ -230,11 +230,11 @@ export function SectionEditor() {
                 >
                   <span style={{ fontWeight: 500 }}>{section.name}</span>
                   <span style={{ color: '#666' }}>
-                    {(section.boundsLocal.y1 - section.boundsLocal.y0).toFixed(2)}m
+                    {(section.boundsLocal.x1 - section.boundsLocal.x0).toFixed(2)}m
                   </span>
                 </div>
                 <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>
-                  {section.boundsLocal.y0.toFixed(2)}m - {section.boundsLocal.y1.toFixed(2)}m
+                  {section.boundsLocal.x0.toFixed(2)}m - {section.boundsLocal.x1.toFixed(2)}m
                 </div>
               </div>
             ))}

@@ -4,8 +4,8 @@ import type { SectionBounds, Section } from '@allotment/domain';
  * Calculate section bounds from a length_splits definition.
  * Sections span full bed width and are divided along bed length (height).
  *
- * @param bedWidth - Bed width in meters (local X dimension)
- * @param bedHeight - Bed height/length in meters (local Y dimension)
+ * @param bedWidth - Bed width in meters (local Y dimension)
+ * @param bedHeight - Bed height/length in meters (local X dimension)
  * @param cuts - Array of cut positions along length (meters from origin)
  * @param bedSectionPlanId - ID of the bed section plan
  * @param bedId - ID of the bed
@@ -29,10 +29,10 @@ export function calculateLengthSplitSections(
   return boundaries.slice(0, -1).map((start, index) => {
     const end = boundaries[index + 1]!;
     const bounds: SectionBounds = {
-      x0: 0,
-      x1: bedWidth,
-      y0: start,
-      y1: end,
+      x0: start,
+      x1: end,
+      y0: 0,
+      y1: bedWidth,
     };
 
     return {

@@ -2,6 +2,7 @@ import type { FastifyPluginAsync } from 'fastify';
 import { CreateBedSectionPlanSchema, UpdateBedSectionPlanSchema } from '@allotment/domain';
 import * as bedPlanService from '../services/bedPlanService.js';
 import * as seasonService from '../services/seasonService.js';
+import * as bedService from '../services/bedService.js';
 
 interface DefinitionJson {
   cuts: number[];
@@ -88,6 +89,15 @@ export const seasonBedPlanRoutes: FastifyPluginAsync = async (server) => {
     const season = await seasonService.getSeasonById(request.params.seasonId);
     if (!season) {
       return reply.status(404).send({ error: 'Season not found' });
+    }
+
+    const bed = await bedService.getBedById(parsed.data.bedId);
+    if (!bed) {
+      return reply.status(404).send({ error: 'Bed not found' });
+    }
+
+    if (bed.plotId !== season.plotId) {
+      return reply.status(400).send({ error: 'Bed does not belong to season plot' });
     }
 
     // Check if plan already exists for this bed in this season

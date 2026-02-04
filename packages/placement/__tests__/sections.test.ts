@@ -22,9 +22,9 @@ describe('sections', () => {
         name: 'Section A',
         boundsLocal: {
           x0: 0,
-          x1: 1.2,
+          x1: 3.0,
           y0: 0,
-          y1: 3.0,
+          y1: 1.2,
         },
       });
     });
@@ -35,11 +35,11 @@ describe('sections', () => {
       expect(sections).toHaveLength(2);
       expect(sections[0]).toMatchObject({
         name: 'Section A',
-        boundsLocal: { x0: 0, x1: 1.2, y0: 0, y1: 1.5 },
+        boundsLocal: { x0: 0, x1: 1.5, y0: 0, y1: 1.2 },
       });
       expect(sections[1]).toMatchObject({
         name: 'Section B',
-        boundsLocal: { x0: 0, x1: 1.2, y0: 1.5, y1: 3.0 },
+        boundsLocal: { x0: 1.5, x1: 3.0, y0: 0, y1: 1.2 },
       });
     });
 
@@ -56,17 +56,17 @@ describe('sections', () => {
       expect(sections[0]).toMatchObject({
         index: 0,
         name: 'Section A',
-        boundsLocal: { y0: 0, y1: 1.0 },
+        boundsLocal: { x0: 0, x1: 1.0 },
       });
       expect(sections[1]).toMatchObject({
         index: 1,
         name: 'Section B',
-        boundsLocal: { y0: 1.0, y1: 2.0 },
+        boundsLocal: { x0: 1.0, x1: 2.0 },
       });
       expect(sections[2]).toMatchObject({
         index: 2,
         name: 'Section C',
-        boundsLocal: { y0: 2.0, y1: 3.0 },
+        boundsLocal: { x0: 2.0, x1: 3.0 },
       });
     });
 
@@ -81,7 +81,7 @@ describe('sections', () => {
 
       expect(sections).toHaveLength(2);
       expect(sections[0]).toMatchObject({
-        boundsLocal: { y0: 0, y1: 1.5 },
+        boundsLocal: { x0: 0, x1: 1.5 },
       });
     });
 
@@ -96,7 +96,7 @@ describe('sections', () => {
 
       expect(sections).toHaveLength(2);
       expect(sections[1]).toMatchObject({
-        boundsLocal: { y0: 1.5, y1: 3.0 },
+        boundsLocal: { x0: 1.5, x1: 3.0 },
       });
     });
 
@@ -110,9 +110,9 @@ describe('sections', () => {
       );
 
       expect(sections).toHaveLength(3);
-      expect(sections[0].boundsLocal.y1).toBe(1.0);
-      expect(sections[1].boundsLocal.y0).toBe(1.0);
-      expect(sections[1].boundsLocal.y1).toBe(2.0);
+      expect(sections[0].boundsLocal.x1).toBe(1.0);
+      expect(sections[1].boundsLocal.x0).toBe(1.0);
+      expect(sections[1].boundsLocal.x1).toBe(2.0);
     });
 
     it('all sections span full bed width', () => {
@@ -126,8 +126,8 @@ describe('sections', () => {
       );
 
       sections.forEach((section) => {
-        expect(section.boundsLocal.x0).toBe(0);
-        expect(section.boundsLocal.x1).toBe(bedWidth);
+        expect(section.boundsLocal.y0).toBe(0);
+        expect(section.boundsLocal.y1).toBe(bedWidth);
       });
     });
   });

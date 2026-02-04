@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { CreatePlotSchema, type CreatePlotInput } from '@allotment/domain';
 import { useUIStore } from '../../store/uiStore';
 import { usePlotStore } from '../../store/plotStore';
+import { useSeasonStore } from '../../store/seasonStore';
 import { createPlot } from '../../api/client';
 
 const overlayStyle: React.CSSProperties = {
@@ -54,6 +55,7 @@ const buttonContainerStyle: React.CSSProperties = {
 export function CreatePlotModal() {
   const { closeCreatePlotModal } = useUIStore();
   const { setPlot, setBeds } = usePlotStore();
+  const { clearSeasons } = useSeasonStore();
 
   const {
     register,
@@ -84,6 +86,7 @@ export function CreatePlotModal() {
         updatedAt: new Date(plot.updatedAt),
       });
       setBeds([]);
+      clearSeasons();
       closeCreatePlotModal();
     } catch (error) {
       console.error('Failed to create plot:', error);

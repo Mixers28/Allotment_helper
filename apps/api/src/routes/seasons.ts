@@ -63,6 +63,22 @@ export const seasonRoutes: FastifyPluginAsync = async (server) => {
     }
 
     try {
+      const existing = await seasonService.getSeasonById(request.params.id);
+      if (!existing) {
+        return reply.status(404).send({ error: 'Season not found' });
+      }
+
+      const nextStart = parsed.data.startDate
+        ? new Date(parsed.data.startDate)
+        : existing.startDate;
+      const nextEnd = parsed.data.endDate
+        ? new Date(parsed.data.endDate)
+        : existing.endDate;
+
+      if (nextStart > nextEnd) {
+        return reply.status(400).send({ error: 'End date must be on or after start date' });
+      }
+
       const season = await seasonService.updateSeason(request.params.id, parsed.data);
       return formatSeasonResponse(season);
     } catch {

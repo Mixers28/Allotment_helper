@@ -1,5 +1,6 @@
 import { usePlotStore } from '../../store/plotStore';
 import { useUIStore } from '../../store/uiStore';
+import { useSeasonStore } from '../../store/seasonStore';
 import { LockToggle } from './LockToggle';
 import { deleteBed, deletePlot } from '../../api/client';
 
@@ -35,6 +36,7 @@ const disabledButtonStyle = {
 export function Toolbar() {
   const { plot, selectedBedId, beds, removeBed, clearPlot } = usePlotStore();
   const { currentTool, setCurrentTool, openAddBedModal } = useUIStore();
+  const { clearSeasons } = useSeasonStore();
 
   const selectedBed = beds.find((b) => b.id === selectedBedId);
 
@@ -64,6 +66,7 @@ export function Toolbar() {
     try {
       await deletePlot(plot.id);
       clearPlot();
+      clearSeasons();
     } catch (error) {
       console.error('Failed to delete plot:', error);
       alert('Failed to delete plot. Please try again.');

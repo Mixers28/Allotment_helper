@@ -13,10 +13,10 @@ export interface BedSectionPlan {
 }
 
 export interface SectionBounds {
-  x0: number; // Start along width (always 0 for lengthwise)
-  x1: number; // End along width (always bed.width)
-  y0: number; // Start along length
-  y1: number; // End along length
+  x0: number; // Start along length
+  x1: number; // End along length
+  y0: number; // Start along width (always 0 for lengthwise)
+  y1: number; // End along width (always bed.width)
 }
 
 export interface Section {
